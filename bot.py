@@ -33,7 +33,7 @@ async def execute_crunchy_command(crunchyroll_link, message):
             data = await process.stdout.read(1024)
             if not data:
                 break
-            await progress.progress_for_pyrogram(
+            await progress_for_pyrogram(
                 current_progress,
                 total_progress,
                 client,
