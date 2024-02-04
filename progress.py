@@ -1,5 +1,5 @@
 import time, math, asyncio
-from bot import client
+from bot import *
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, User
 
