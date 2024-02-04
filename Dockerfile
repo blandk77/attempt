@@ -12,8 +12,7 @@ RUN apt-get update && apt-get install -y \
 # Download and install crunchy-cli
 RUN curl -O -L https://github.com/crunchy-labs/crunchy-cli/releases/download/v3.2.5/crunchy-cli-v3.2.5-linux-x86_64 \
     && chmod +x crunchy-cli-v3.2.5-linux-x86_64 \
-    && mv crunchy-cli-v3.2.5-linux-x86_64 /usr/local/bin/crunchy-cli
-
+  
 # Install Python dependencies
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
