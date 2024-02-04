@@ -61,8 +61,33 @@ async def execute_crunchy_command(crunchyroll_link, message):
             crunchyroll_link
         ]
         process_without_credentials = await asyncio.create_subprocess_exec(*command_without_credentials, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        
+        # Start time for progress tracking for process without credentials
+        start_time_without_credentials = time.time()  
 
-        return None
+        # Send initial progress message for process without credentials
+        progress_message_without_credentials = await client.send_message(message.chat_id, "Ripping in progress...")
+
+        while True:
+            data = await process_without_credentials.stdout.read(1024)
+            if not data:
+                break
+            await progress.progress_for_pyrogram(
+                current_progress,
+                total_progress,
+                client,
+                "Ripping Status",
+                progress_message_without_credentials,
+                start_time_without_credentials
+            )
+
+        stdout_without_credentials, stderr_without_credentials = await process_without_credentials.communicate()
+
+        if process_without_credentials.returncode == 0:
+            return stdout_without_credentials
+        else:
+            logger.error(f'Error executing command without credentials: {stderr_without_credentials.decode()}')
+            return None
     except Exception as e:
         logger.exception(f'Error executing command: {str(e)}')
         return None
