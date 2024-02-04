@@ -5,6 +5,7 @@ import asyncio
 import subprocess
 import time
 from progress import *
+from progress import progress_for_pyrogram
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
