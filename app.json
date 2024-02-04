@@ -1,0 +1,17 @@
+{
+    "name": "File Store Bot",
+    "description": "A Telegram Files Store Bot to protect your Files in Pyrogram by @TheTeleRoid",
+    "keywords": [
+        "telegram",
+        "files",
+        "store",
+        "bot"
+    ],
+    "stack": "container",
+    "formation": {
+        "worker": {
+            "quantity": 1,
+            "size": "Eco"
+        }
+    }
+}
