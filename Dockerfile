@@ -5,11 +5,8 @@ FROM python:3.9-slim
 WORKDIR /app
 
 # Install dependencies and FFmpeg
-RUN apt-get update \
-  && apt-get install -y libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 wget xz-utils \
-  && wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n5.1-latest-linux64-gpl-5.1.tar.xz \
-  && tar -xvf ffmpeg-n5.1-latest-linux64-gpl-5.1.tar.xz 
-  
+RUN apt -qq update && apt -qq install -y ffmpeg mediainfo build-essential
+
 RUN apt-get update && apt-get install -y \
     curl \
     && rm -rf /var/lib/apt/lists/*
