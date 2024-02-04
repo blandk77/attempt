@@ -7,6 +7,7 @@ WORKDIR /app
 # Install dependencies
 RUN apt-get update && apt-get install -y \
     curl \
+    ffmpeg \    # Install FFmpeg
     && rm -rf /var/lib/apt/lists/*
 
 # Download and install crunchy-cli
