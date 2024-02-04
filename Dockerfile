@@ -8,8 +8,11 @@ WORKDIR /app
 RUN apt-get update \
   && apt-get install -y libgl1 libglib2.0-0 libsm6 libxrender1 libxext6 wget xz-utils \
   && wget https://github.com/BtbN/FFmpeg-Builds/releases/download/latest/ffmpeg-n5.1-latest-linux64-gpl-5.1.tar.xz \
-  && tar -xvf ffmpeg-n5.1-latest-linux64-gpl-5.1.tar.xz \
-  && curl
+  && tar -xvf ffmpeg-n5.1-latest-linux64-gpl-5.1.tar.xz 
+  
+RUN apt-get update && apt-get install -y \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
 # Download and install crunchy-cli
 RUN curl -O -L https://github.com/crunchy-labs/crunchy-cli/releases/download/v3.2.5/crunchy-cli-v3.2.5-linux-x86_64 \
