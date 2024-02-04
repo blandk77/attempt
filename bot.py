@@ -18,7 +18,7 @@ async def execute_crunchy_command(crunchyroll_link, message):
     try:
         command = [
             './crunchy-cli-v3.2.5-linux-x86_64',
-            'archive', '-r', '1280x720', '-a', 'te-IN', '--ffmpeg-preset', 'h265-normal',
+            '--anonymous', 'archive', '-r', '1280x720', '-a', 'te-IN', '--ffmpeg-preset', 'h265-normal',
             crunchyroll_link
         ]
         process = await asyncio.create_subprocess_exec(*command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
