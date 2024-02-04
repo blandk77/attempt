@@ -3,7 +3,8 @@ from telethon import TelegramClient, events
 from config import Config
 import asyncio
 import subprocess
-from progress import *# Import your progress module
+import time
+from progress import *
 
 # Set up logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -49,6 +50,19 @@ async def execute_crunchy_command(crunchyroll_link, message):
         else:
             logger.error(f'Error executing command: {stderr.decode()}')
             return None
+    except subprocess.CalledProcessError as e:
+        # Catch the exception when login fails due to invalid credentials
+        logger.error(f'Error executing command: {str(e)}')
+        logger.info('Trying to rip without account credentials...')
+        # Retry the command without account credentials
+        command_without_credentials = [
+            './crunchy-cli-v3.2.5-linux-x86_64',
+            'archive', '-r', '1280x720', '-a', 'te-IN', '--ffmpeg-preset', 'h265-normal',
+            crunchyroll_link
+        ]
+        process_without_credentials = await asyncio.create_subprocess_exec(*command_without_credentials, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+        return None
     except Exception as e:
         logger.exception(f'Error executing command: {str(e)}')
         return None
@@ -81,4 +95,3 @@ async def handle_rip_command(event):
 
 # Start the event loop
 client.run_until_disconnected()
-      
