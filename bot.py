@@ -18,7 +18,6 @@ async def execute_crunchy_command(crunchyroll_link, message):
     try:
         command = [
             './crunchy-cli-v3.2.5-linux-x86_64',
-            '--credentials', f'"{Config.CR_EMAIL}:{Config.CR_PASSWORD}"',
             'archive', '-r', '1280x720', '-a', 'te-IN', '--ffmpeg-preset', 'h265-normal',
             crunchyroll_link
         ]
