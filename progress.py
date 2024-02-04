@@ -1,5 +1,5 @@
 import time, math, asyncio
-from Bot import encoder,LOG
+from bot import client
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, User
 
@@ -31,7 +31,7 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
             estimated_total_time if estimated_total_time != '' else "Calculating"
         )
         try:
-            await encoder.edit_message_text(chat_id=message.chat.id,message_id=message.id,
+            await client.edit_message_text(chat_id=message.chat.id,message_id=message.id,
                 text="{}\n{}".format(
                     ud_type,
                     tmp
