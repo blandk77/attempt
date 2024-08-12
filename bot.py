@@ -12,6 +12,10 @@ logger = logging.getLogger(__name__)
 
 client = TelegramClient('bot_session', Config.TELEGRAM_API_ID, Config.TELEGRAM_API_HASH).start(bot_token=Config.TELEGRAM_BOT_TOKEN)
 
+@client.on(events.NewMessage(pattern='/start'))
+async def start_message(event):
+    await event.respond("Welcome to the Crunchyroll Downloader Bot! Send me a Crunchyroll link using the /rip command to start downloading.")
+
 async def progress_for_pyrogram(current, total, client, message, start_time):
     try:
         now = time.time()
