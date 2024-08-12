@@ -2,9 +2,9 @@
 
 class Config:
     # Telegram bot credentials
-    TELEGRAM_API_ID = '13384432'
-    TELEGRAM_API_HASH = 'ea9db4503ed7088b788e06dfd818e00e'
-    TELEGRAM_BOT_TOKEN = '5445383515:AAFSGEp4QCoumj7sz9zhD5bcLBwORNQxR7g'
+    TELEGRAM_API_ID = '21740783'
+    TELEGRAM_API_HASH = 'a5dc7fec8302615f5b441ec5e238cd46'
+    TELEGRAM_BOT_TOKEN = '7116266807:AAFiuS4MxcubBiHRyzKEDnmYPCRiS0f3aGU'
 
     # Crunchyroll credentials
     CR_EMAIL = 'kaa.top11@gmail.com'
