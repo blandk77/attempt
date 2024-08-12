@@ -7,6 +7,6 @@ class Config:
     TELEGRAM_BOT_TOKEN = '7116266807:AAFiuS4MxcubBiHRyzKEDnmYPCRiS0f3aGU'
 
     # Crunchyroll credentials
-    CR_EMAIL = 'metalero21@gmail.com'
-    CR_PASSWORD = 'Campaneko_1313'
+    CR_EMAIL = 'saraneshsw@gmail.com'
+    CR_PASSWORD = 'saran@2468'
   
