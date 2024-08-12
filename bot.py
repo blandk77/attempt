@@ -50,11 +50,15 @@ async def execute_crunchy_command(crunchyroll_link, message):
         start_time = time.time()
         progress_message = await client.send_message(message.chat_id, "Ripping in progress...")
 
+        total_data_read = 0
+        total_size = 1000  # Estimate or set a value if known
+
         while True:
             data = await process.stdout.read(1024)
             if not data:
                 break
-            await progress_for_pyrogram(process.stdout.tell(), 1000, client, progress_message, start_time)
+            total_data_read += len(data)
+            await progress_for_pyrogram(total_data_read, total_size, client, progress_message, start_time)
 
         stdout, stderr = await process.communicate()
 
