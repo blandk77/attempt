@@ -1,16 +1,78 @@
 import logging
-from telethon import TelegramClient, events
-from config import Config
-import asyncio
-import subprocess
 import time
 import math
-from progress import progress_for_pyrogram, humanbytes, TimeFormatter
+import asyncio
+import subprocess
+import os
+from telethon import TelegramClient, events
+from telethon.tl.types import KeyboardButtonUrl
+from config import Config
 
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
 logger = logging.getLogger(__name__)
 
 client = TelegramClient('bot_session', Config.TELEGRAM_API_ID, Config.TELEGRAM_API_HASH).start(bot_token=Config.TELEGRAM_BOT_TOKEN)
+
+# Progress functions adapted for Telethon
+PROGRESS = """
+• {0} of {1}
+• Speed: {2}
+• ETA: {3}
+"""
+
+async def progress_for_telethon(current, total, ud_type, message, start):
+    now = time.time()
+    diff = now - start
+    if round(diff % 10.00) == 0 or current == total:
+        percentage = current * 100 / total
+        speed = current / diff
+        elapsed_time = round(diff)
+        time_to_completion = round((total - current) / speed)
+        estimated_total_time = elapsed_time + time_to_completion
+        elapsed_time = TimeFormatter(seconds=elapsed_time)
+        estimated_total_time = TimeFormatter(seconds=estimated_total_time)
+        progress = "[{0}{1}]".format(
+            ''.join(["⬢" for i in range(math.floor(percentage / 10))]),
+            ''.join(["⬡" for i in range(10 - math.floor(percentage / 10))])
+        )
+        tmp = progress + PROGRESS.format(
+            humanbytes(current),
+            humanbytes(total),
+            humanbytes(speed) + "/s",
+            estimated_total_time if estimated_total_time != '' else "Calculating"
+        )
+        try:
+            # Use Telethon's edit_message instead of Pyrogram's edit_message_text
+            await client.edit_message(
+                message,
+                text="{}\n{}".format(ud_type, tmp),
+                buttons=[KeyboardButtonUrl("Owner", "https://t.me/ninja_obito_sai")]
+            )
+        except Exception as e:
+            logger.error(f'Error updating progress: {e}')
+            pass
+        await asyncio.sleep(5)
+
+def humanbytes(size):
+    if not size:
+        return ""
+    power = 1024
+    t_n = 0
+    power_dict = {0: ' ', 1: 'K', 2: 'M', 3: 'G', 4: 'T'}
+    while size > power:
+        size /= power
+        t_n += 1
+    return "{:.2f} {}B".format(size, power_dict[t_n])
+
+def TimeFormatter(seconds: float) -> str:
+    minutes, seconds = divmod(int(seconds), 60)
+    hours, minutes = divmod(minutes, 60)
+    days, hours = divmod(hours, 24)
+    tmp = ((str(days) + "d, ") if days else "") + \
+          ((str(hours) + "h, ") if hours else "") + \
+          ((str(minutes) + "m, ") if minutes else "") + \
+          ((str(seconds) + "s, ") if seconds else "")
+    return tmp[:-2]
 
 @client.on(events.NewMessage(pattern='/start'))
 async def start_message(event):
@@ -48,8 +110,7 @@ async def execute_crunchy_command(crunchyroll_link, message):
             if not data:
                 break
             total_data_read += len(data)
-            # Use bot.py's progress_for_pyrogram for download progress
-            await progress_for_pyrogram(total_data_read, total_size, "Downloading", progress_message, start_time)
+            await progress_for_telethon(total_data_read, total_size, "Downloading", progress_message, start_time)
 
         stdout, stderr = await process.communicate()
         error_msg = stderr.decode().lower()
@@ -57,39 +118,36 @@ async def execute_crunchy_command(crunchyroll_link, message):
         if process.returncode == 0:
             # Assume stdout contains the path to the downloaded video
             video_path = stdout.decode().strip()
-            if video_path:
+            if video_path and os.path.exists(video_path):
                 return video_path
             else:
-                logger.error("No video path returned by crunchy-cli")
-                await client.edit_message_text(message.chat_id, progress_message.id, "Error: No video file produced")
+                logger.error("No valid video path returned by crunchy-cli")
+                await client.edit_message(progress_message, "Error: No video file produced")
                 return None
         else:
             logger.error(f'Error executing command: {error_msg}')
             if "rate limit" in error_msg:
-                await client.edit_message_text(message.chat_id, progress_message.id,
-                                              "Rate limit hit. Please try again in 10-20 minutes.")
+                await client.edit_message(progress_message, "Rate limit hit. Please try again in 10-20 minutes.")
             elif "invalid credentials" in error_msg and use_auth:
                 logger.info("Invalid credentials; retrying with anonymous mode")
-                # Retry with anonymous mode
                 command = ['./crunchy-cli-v3.2.5-linux-x86_64', '--anonymous', 'archive', '-r', '1280x720', '-a', 'en-US', crunchyroll_link]
                 process = await asyncio.create_subprocess_exec(*command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
                 stdout, stderr = await process.communicate()
                 if process.returncode == 0:
                     video_path = stdout.decode().strip()
-                    if video_path:
+                    if video_path and os.path.exists(video_path):
                         return video_path
                 error_msg = stderr.decode().lower()
                 if "rate limit" in error_msg:
-                    await client.edit_message_text(message.chat_id, progress_message.id,
-                                                  "Rate limit hit in anonymous mode. Please try again in 10-20 minutes.")
+                    await client.edit_message(progress_message, "Rate limit hit in anonymous mode. Please try again in 10-20 minutes.")
                 else:
-                    await client.edit_message_text(message.chat_id, progress_message.id, f"Ripping failed: {error_msg}")
+                    await client.edit_message(progress_message, f"Ripping failed: {error_msg}")
             else:
-                await client.edit_message_text(message.chat_id, progress_message.id, f"Ripping failed: {error_msg}")
+                await client.edit_message(progress_message, f"Ripping failed: {error_msg}")
             return None
     except Exception as e:
         logger.exception(f'Error executing command: {str(e)}')
-        await client.edit_message_text(message.chat_id, progress_message.id, f"Error: {str(e)}")
+        await client.edit_message(progress_message, f"Error: {str(e)}")
         return None
 
 @client.on(events.NewMessage(pattern='/rip'))
@@ -111,42 +169,25 @@ async def handle_rip_command(event):
         video_path = await execute_crunchy_command(crunchyroll_link, event.message)
 
         if video_path:
-            # Upload the video using progress.py's progress_for_pyrogram
             start_time = time.time()
             await client.send_file(
                 event.chat_id,
                 video_path,
                 caption="Here is your ripped video!",
-                progress=progress_for_pyrogram,
+                progress=progress_for_telethon,
                 progress_args=("Uploading", event.message, start_time)
             )
             logger.info(f'Successfully uploaded video to {event.chat_id}')
+            # Clean up the video file
+            try:
+                os.remove(video_path)
+                logger.info(f"Deleted video file: {video_path}")
+            except Exception as e:
+                logger.error(f"Failed to delete video file: {e}")
         else:
             logger.error("No video path returned; upload skipped")
     except Exception as e:
         await event.respond(f'Error: {str(e)}')
         logger.exception(f'Error: {str(e)}')
-
-# Local progress_for_pyrogram for download progress (simplified)
-async def progress_for_pyrogram(current, total, ud_type, message, start):
-    now = time.time()
-    diff = now - start
-    if round(diff % 10.00) == 0 or current == total:
-        percentage = current * 100 / total
-        speed = current / diff
-        elapsed_time = round(diff)
-        time_to_completion = round((total - current) / speed)
-        estimated_total_time = elapsed_time + time_to_completion
-        elapsed_time_str = TimeFormatter(elapsed_time)
-        estimated_total_time_str = TimeFormatter(estimated_total_time)
-        progress = "[{0}{1}]".format(
-            ''.join(["⬢" for _ in range(math.floor(percentage / 10))]),
-            ''.join(["⬡" for _ in range(10 - math.floor(percentage / 10))])
-        )
-        progress_message = f"{ud_type}...\n\n" \
-                          f"{progress} {percentage:.2f}%\n" \
-                          f"Speed: {humanbytes(speed)}/s\n" \
-                          f"ETA: {estimated_total_time_str}"
-        await client.edit_message_text(chat_id=message.chat.id, message_id=message.id, text=progress_message)
 
 client.run_until_disconnected()
