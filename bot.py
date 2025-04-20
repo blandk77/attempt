@@ -20,7 +20,8 @@ PROGRESS = """
 • ETA: {3}
 """
 
-async def progress_for_telethon(current, total, ud_type, message, start):
+async def progress_for_telethon(current, total, ud_type, message, start, total_size=None):
+    total = total_size if total_size is not None else total
     now = time.time()
     diff = now - start
     if round(diff % 10.00) == 0 or current == total:
@@ -42,7 +43,6 @@ async def progress_for_telethon(current, total, ud_type, message, start):
             estimated_total_time if estimated_total_time != '' else "Calculating"
         )
         try:
-            # Use Telethon's edit_message instead of Pyrogram's edit_message_text
             await client.edit_message(
                 message,
                 text="{}\n{}".format(ud_type, tmp),
@@ -89,7 +89,9 @@ async def execute_crunchy_command(crunchyroll_link, message):
         # Try authenticated mode if credentials are provided
         use_auth = False
         if hasattr(Config, 'CR_EMAIL') and hasattr(Config, 'CR_PASSWORD') and Config.CR_EMAIL and Config.CR_PASSWORD:
-            command = ['./crunchy-cli-v3.2.5-linux-x86_64', '--username', Config.CR_EMAIL, '--password', Config.CR_PASSWORD,
+            # Format credentials as "email:password" for --credentials flag
+            credentials = f"{Config.CR_EMAIL}:{Config.CR_PASSWORD}"
+            command = ['./crunchy-cli-v3.2.5-linux-x86_64', '--credentials', credentials,
                        'archive', '-r', '1280x720', '-a', 'en-US', crunchyroll_link]
             use_auth = True
         else:
@@ -101,8 +103,8 @@ async def execute_crunchy_command(crunchyroll_link, message):
         start_time = time.time()
         progress_message = await client.send_message(message.chat_id, "Ripping in progress...")
 
-        # Estimate total size (placeholder; ideally get from crunchy-cli output or metadata)
-        total_size = 1000  # TODO: Replace with actual size if available
+        # Estimate total size for download progress (placeholder)
+        total_size = 1000  # TODO: Replace with actual size if available from crunchy-cli
         total_data_read = 0
 
         while True:
@@ -110,7 +112,7 @@ async def execute_crunchy_command(crunchyroll_link, message):
             if not data:
                 break
             total_data_read += len(data)
-            await progress_for_telethon(total_data_read, total_size, "Downloading", progress_message, start_time)
+            await progress_for_telethon(total_data_read, total_size, "Downloading", progress_message, start_time, total_size)
 
         stdout, stderr = await process.communicate()
         error_msg = stderr.decode().lower()
@@ -118,6 +120,7 @@ async def execute_crunchy_command(crunchyroll_link, message):
         if process.returncode == 0:
             # Assume stdout contains the path to the downloaded video
             video_path = stdout.decode().strip()
+            logger.info(f"crunchy-cli stdout: {video_path}")
             if video_path and os.path.exists(video_path):
                 return video_path
             else:
@@ -135,6 +138,7 @@ async def execute_crunchy_command(crunchyroll_link, message):
                 stdout, stderr = await process.communicate()
                 if process.returncode == 0:
                     video_path = stdout.decode().strip()
+                    logger.info(f"crunchy-cli stdout (anonymous): {video_path}")
                     if video_path and os.path.exists(video_path):
                         return video_path
                 error_msg = stderr.decode().lower()
@@ -170,12 +174,13 @@ async def handle_rip_command(event):
 
         if video_path:
             start_time = time.time()
+            total_size = os.path.getsize(video_path)  # Get actual file size for upload progress
             await client.send_file(
                 event.chat_id,
                 video_path,
                 caption="Here is your ripped video!",
                 progress=progress_for_telethon,
-                progress_args=("Uploading", event.message, start_time)
+                progress_args=("Uploading", event.message, start_time, total_size)
             )
             logger.info(f'Successfully uploaded video to {event.chat_id}')
             # Clean up the video file
