@@ -1,5 +1,4 @@
 import time, math, asyncio
-from bot import *
 from pyrogram.enums import ParseMode
 from pyrogram.types import InlineKeyboardButton, InlineKeyboardMarkup, Message, User
 
@@ -36,7 +35,7 @@ async def progress_for_pyrogram(current, total, ud_type, message, start):
                     ud_type,
                     tmp
                 ),
-                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Owner", url = 'https://t.me/ninja_obito_sai')]]) #instead of reply_markup u can use parse_mode=ParseMode.MARKDOWN
+                reply_markup=InlineKeyboardMarkup([[InlineKeyboardButton("Owner", url = 'https://t.me/The_TGguy')]]) #instead of reply_markup u can use parse_mode=ParseMode.MARKDOWN
             )
         except Exception as e:
             LOG.error(f'Senpai Error: {e}')            
